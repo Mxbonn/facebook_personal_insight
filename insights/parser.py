@@ -35,9 +35,10 @@ def messages(data_path, conversation):
     print("Writing csv ...")
     with open(csv_path, 'w') as csv_file:
         writer = csv.writer(csv_file, delimiter=",")
-        header = ['time', 'sender']
+        header = ['time', 'sender', 'text']
         writer.writerow(header)
         for message_div in soup.select('div[role="main"] > div.pam._3-95._2pi0._2lej.uiBoxWhite.noborder'):
             sender = message_div.find("div", "_3-96 _2pio _2lek _2lel").get_text()
             time_text = message_div.find("div", "_3-94 _2lem").get_text()
-            writer.writerow([time_text, sender])
+            text = message_div.select('div._3-96._2let > div > div')[1].get_text()
+            writer.writerow([time_text, sender, text])
