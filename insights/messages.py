@@ -150,3 +150,81 @@ def plot_amount_messages(data_path, conversation, tick_width=1, days=365, show=F
     if show:
         plt.show()
     plt.close()
+
+def message_activity_hourly(data_path, sender, show=False):
+    path = os.path.join(data_path, "messages")
+    directories = os.listdir(path)
+    df = None
+    for directory in directories:
+        directory_path = os.path.join(path, directory)
+        if os.path.isdir(directory_path) and directory not in ["insights", "stickers_used"]:
+            csv_path = os.path.join(directory_path, "message.csv")
+            if os.path.isfile(csv_path):
+                if df is None:
+                    df = pd.read_csv(csv_path)
+                else:
+                    df = df.append(pd.read_csv(csv_path), ignore_index=True)
+    df['time'] = pd.to_datetime(df['time'], format="%d %B %Y %H:%M")
+    df = df.sort_values('time')
+    df['hour'] = df['time'].dt.hour
+    df = df[df['sender'] == sender]
+    grouped = df.groupby(['hour']).size().reset_index(name='amount_messages')
+    fig, ax = plt.subplots(1, 1, figsize=(5, 10))
+    ax.barh(grouped['hour'], grouped['amount_messages'], color="#4286f4")
+    major_locator = MultipleLocator(1)
+    ax.yaxis.set_major_locator(major_locator)
+    ax.set_ylim(-0.5, 23.5)
+    ax.get_xaxis().set_visible(False)
+    ax.set_title('Message activity per hour.')
+
+    output_path = os.path.join(path, "insights")
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    file_name = "message_activity_{}.png".format(sender.replace(" ","_"))
+    file_name = os.path.join(output_path, file_name)
+    plt.savefig(file_name, bbox_inches='tight')
+
+    if show:
+        plt.show()
+    plt.close()
+
+def message_activity_weekly(data_path, sender, show=False):
+    path = os.path.join(data_path, "messages")
+    directories = os.listdir(path)
+    df = None
+    for directory in directories:
+        directory_path = os.path.join(path, directory)
+        if os.path.isdir(directory_path) and directory not in ["insights", "stickers_used"]:
+            csv_path = os.path.join(directory_path, "message.csv")
+            if os.path.isfile(csv_path):
+                if df is None:
+                    df = pd.read_csv(csv_path)
+                else:
+                    df = df.append(pd.read_csv(csv_path), ignore_index=True)
+    df['time'] = pd.to_datetime(df['time'], format="%d %B %Y %H:%M")
+    df = df.sort_values('time')
+    df['dayofweek'] = df['time'].dt.dayofweek
+    df = df[df['sender'] == sender]
+    grouped = df.groupby(['dayofweek']).size().reset_index(name='amount_messages')
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    ax.bar(grouped['dayofweek'], grouped['amount_messages'], color="#4286f4")
+    major_locator = MultipleLocator(1)
+    ax.yaxis.set_major_locator(major_locator)
+    ax.set_xlim(-0.5, 6.5)
+    ax.get_yaxis().set_visible(False)
+    ax.set_title('Weekly message activity.')
+    days = ['invisible tick', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    ax.set_xticklabels(days)
+
+    output_path = os.path.join(path, "insights")
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    file_name = "message_activity_weekly_{}.png".format(sender.replace(" ","_"))
+    file_name = os.path.join(output_path, file_name)
+    plt.savefig(file_name, bbox_inches='tight')
+
+    if show:
+        plt.show()
+    plt.close()
