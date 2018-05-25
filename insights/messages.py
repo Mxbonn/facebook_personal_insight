@@ -12,7 +12,26 @@ import pandas as pd
 COLORS = ['#5DADE2', '#EB984E', '#48C9B0', '#F4D03F', '#AF7AC5', '#EC7063', '#45B39D', '#CACFD2']
 EDGE_COLORS = ['#2874A6', '#AF601A', '#148F77', '#B7950B', '#76448A', '#B03A2E', '#117A65', '#839192']
 
-def plot_messages(data_path, conversation, tick_width=1, days=365, show=False):
+def plot_messages(data_path, conversation, end_date=None, start_date=30, tick_width=1, show=False):
+    """
+    Plot the messages for the conversation over the specified time period.
+
+    Parameters
+    ----------
+    data_path : str
+        Path to the root directory of your personal facebook data.
+    conversation : str
+        Name of the directory that contains the message.csv with all data.
+    end_date : datetime-like or None, optional
+        Last date to include in analysis.
+    start_date : datetime-like or int, optional
+        If datetime-like: first date to include in analysis.
+        If int: Start date will be X days before end_date
+    tick_width : float
+        width in inches between consecutive ticks on both axis.
+    show : bool, default to False
+        Show the generated plot.
+    """
     messages_path = os.path.join(data_path, "messages")
     path = os.path.join(messages_path, conversation)
     csv_path = os.path.join(path, "message.csv")
@@ -23,10 +42,22 @@ def plot_messages(data_path, conversation, tick_width=1, days=365, show=False):
     df['date'] = df['time'].dt.date
     df['minutes'] = df['time'].dt.hour * 60 + df['time'].dt.minute
 
-    end_date = df['date'].max()
-    start_date = max(df['date'].min(), end_date - datetime.timedelta(days))
-    df = df[df['date'] >= start_date]
-    start_date = max(df['date'].min(), end_date - datetime.timedelta(days))
+    last_date = df['date'].max()
+    last_date = pd.Timestamp(last_date)
+    if end_date is None:
+        end_date = last_date
+    else:
+        end_date = pd.Timestamp(end_date)
+        end_date = min(end_date, last_date)
+
+    if isinstance(start_date, int):
+        days = start_date
+        start_date = max(pd.Timestamp(df['date'].min()), end_date - datetime.timedelta(days))
+    else:
+        start_date = pd.Timestamp(start_date)
+
+    df = df[df['date'] <= end_date.date()]
+    df = df[df['date'] >= start_date.date()]
 
     senders = df['sender'].unique()
 
@@ -51,17 +82,22 @@ def plot_messages(data_path, conversation, tick_width=1, days=365, show=False):
     y_length = max(y_length, 10)
     ax.yaxis.grid(linestyle=':', linewidth=0.5)
 
-    ax.xaxis.set_major_locator(DayLocator())
+    period = (end_date - start_date).days
+    if period > 366:
+        interval = 7
+    else:
+        interval = 1
+    ax.xaxis.set_major_locator(DayLocator(interval=interval))
     ax.xaxis.set_major_formatter(DateFormatter('%d/%m/%Y'))
     ax.xaxis.grid(linestyle=':', linewidth=0.5)
-    start_date = df['date'].min()
-    end_date = df['date'].max()
-    period = (end_date - start_date).days
     x_length = period * tick_width
     x_length = max(x_length, 5)
     fig.set_size_inches(x_length, y_length)
     fig.autofmt_xdate(rotation=90)
     ax.legend()
+    ax.set_title("Messages activity.")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Time")
 
     output_path = os.path.join(messages_path, "insights")
     if not os.path.exists(output_path):
@@ -76,7 +112,27 @@ def plot_messages(data_path, conversation, tick_width=1, days=365, show=False):
     return
 
 
-def plot_amount_messages(data_path, conversation, tick_width=1, days=365, show=False):
+def plot_amount_messages(data_path, conversation, end_date=None, start_date=30, tick_width=1, show=False):
+    """
+    Plot the amount of messages a day for the conversation over the specified time period.
+
+    Parameters
+    ----------
+    data_path : str
+        Path to the root directory of your personal facebook data.
+    conversation : str
+        Name of the directory that contains the message.csv with all data.
+    end_date : datetime-like or None, optional
+        Last date to include in analysis.
+    start_date : datetime-like or int, optional
+        If datetime-like: first date to include in analysis.
+        If int: Start date will be X days before end_date
+    tick_width : float
+        width in inches between consecutive ticks on both axis.
+    show : bool, default to False
+        Show the generated plot.
+
+    """
     messages_path = os.path.join(data_path, "messages")
     path = os.path.join(messages_path, conversation)
     csv_path = os.path.join(path, "message.csv")
@@ -88,9 +144,22 @@ def plot_amount_messages(data_path, conversation, tick_width=1, days=365, show=F
     df['minutes'] = df['time'].dt.hour * 60 + df['time'].dt.minute
     df = df.groupby(['date', 'sender']).size().reset_index(name='amount_messages')
 
-    end_date = df['date'].max()
-    start_date = max(df['date'].min(), end_date - datetime.timedelta(days))
+    last_date = df['date'].max()
+    if end_date is None:
+        end_date = last_date
+    else:
+        end_date = pd.Timestamp(end_date)
+        end_date = min(end_date, last_date)
+
+    if isinstance(start_date, int):
+        days = start_date
+        start_date = max(df['date'].min(), end_date - datetime.timedelta(days))
+    else:
+        start_date = pd.Timestamp(start_date)
+
+    df = df[df['date'] <= end_date]
     df = df[df['date'] >= start_date]
+
     date_range = pd.date_range(start_date, end_date, freq="1D")
 
     senders = df['sender'].unique()
@@ -105,6 +174,10 @@ def plot_amount_messages(data_path, conversation, tick_width=1, days=365, show=F
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    if df.amount_messages.max() < 40:
+        offset = 0
+    else:
+        offset = 1
     for i, sender in enumerate(senders):
         i = i % len(COLORS)
         df_sender = df[df['sender'] == sender]
@@ -120,7 +193,7 @@ def plot_amount_messages(data_path, conversation, tick_width=1, days=365, show=F
 
         for x, y, value in zip(dates, bottom, df_sender['amount_messages']):
             if value != 0:
-                ax.text(x, y + 1, str(value))
+                ax.text(x, y + offset, str(value))
 
     ax.xaxis_date()
 
@@ -129,14 +202,21 @@ def plot_amount_messages(data_path, conversation, tick_width=1, days=365, show=F
     ax.yaxis.grid(linestyle=':', linewidth=0.5)
     y_length = max(ax.get_ylim()[1] / 10 * tick_width, 10)
 
-    ax.xaxis.set_major_locator(DayLocator())
+    period = (end_date - start_date).days
+    if period > 366:
+        interval = 7
+    else:
+        interval = 1
+    ax.xaxis.set_major_locator(DayLocator(interval=interval))
     ax.xaxis.set_major_formatter(DateFormatter('%d/%m/%Y'))
     ax.xaxis.grid(linestyle=':', linewidth=0.5)
-    period = (end_date - start_date).days
     x_length = max(period * tick_width, 5)
     fig.autofmt_xdate(rotation=90)
     fig.set_size_inches(x_length, y_length)
     plt.title("Amount messages per day.")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Messages")
+
     ax.legend()
 
     output_path = os.path.join(messages_path, "insights")
@@ -152,6 +232,19 @@ def plot_amount_messages(data_path, conversation, tick_width=1, days=365, show=F
     plt.close()
 
 def message_activity_hourly(data_path, sender, show=False):
+    """
+    Plot activity for every hour of the day.
+
+    Parameters
+    ----------
+    data_path : str
+        Path to the root directory of your personal facebook data.
+    sender : str
+        Name of the sender of the messages. Recommended to be your own name.
+    show : bool, default to False
+        Show the generated plot.
+
+    """
     path = os.path.join(data_path, "messages")
     directories = os.listdir(path)
     df = None
@@ -190,6 +283,19 @@ def message_activity_hourly(data_path, sender, show=False):
     plt.close()
 
 def message_activity_weekly(data_path, sender, show=False):
+    """
+    Plot activity for every day of the week.
+
+    Parameters
+    ----------
+    data_path : str
+        Path to the root directory of your personal facebook data.
+    sender : str
+        Name of the sender of the messages. Recommended to be your own name.
+    show : bool, default to False
+        Show the generated plot.
+
+    """
     path = os.path.join(data_path, "messages")
     directories = os.listdir(path)
     df = None
@@ -324,6 +430,9 @@ def most_active_chat(data_path, tick_width=1, end_date=None, start_date=30, lege
     x_length = max(period * tick_width, 5)
     fig.autofmt_xdate(rotation=90)
     fig.set_size_inches(x_length, y_length)
+    ax.set_title("Most active chats.")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Messages")
 
     output_path = os.path.join(path, "insights")
     if not os.path.exists(output_path):
