@@ -1,3 +1,4 @@
+import datetime
 import os
 
 import matplotlib.pyplot as plt
@@ -38,15 +39,18 @@ def like_statistics(data_path, top=20, yearly=False, fixed_top=False, show=False
     df['date'] = df['time'].dt.date
     end_year = df['date'].max().year
     start_year = df['date'].min().year
+    if isinstance(yearly, tuple):
+        start_year = yearly[0]
+        end_year = yearly[1]
+    rows = end_year - start_year + 1
+    start_date = datetime.date(start_year,1,1)
+    end_date = datetime.date(end_year,12, 31)
+    df = df[(df['date'] > start_date) & (df['date'] < end_date)]
     index = df.poster.value_counts().head(top).index
-    if yearly:
-        if isinstance(yearly, tuple):
-            start_year = yearly[0]
-            end_year = yearly[1]
-        rows = end_year - start_year + 1
 
+    if yearly:
         if top is not None:
-            x_length = top * 0.5
+            x_length = top * 1
             fig, axes = plt.subplots(rows, 1, figsize=(x_length, 6 * rows))
             fig.subplots_adjust(hspace=1)
             for r in range(rows):
@@ -64,7 +68,7 @@ def like_statistics(data_path, top=20, yearly=False, fixed_top=False, show=False
             raise ValueError("Yearly=true and top=None cannot be combined.")
     else:
         if top is not None:
-            x_length = top * 0.5
+            x_length = top * 1
             fig, ax = plt.subplots(1,1, figsize=(x_length ,5))
             df.poster.value_counts().head(top).plot(kind='bar', alpha=0.7)
         else:
@@ -73,12 +77,13 @@ def like_statistics(data_path, top=20, yearly=False, fixed_top=False, show=False
             df.poster.value_counts().plot(kind='bar', alpha=0.7)
         ax.yaxis.grid(linestyle=':', alpha=0.6)
 
+
     output_path = os.path.join(likes_path, "insights")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
     file_name =  "likes_statistics.png"
-    file_name = os.path.join(likes_path, file_name)
+    file_name = os.path.join(output_path, file_name)
     plt.savefig(file_name, bbox_inches='tight')
 
     if show:
