@@ -5,6 +5,31 @@ import pandas as pd
 
 
 def like_statistics(data_path, top=20, yearly=False, fixed_top=False, show=False):
+    """
+
+    Parameters
+    ----------
+    data_path : str
+        Path to the root directory of your personal facebook data.
+    top : int or None, default 20
+        Number of unique friends/pages you liked posts from.
+        if None all liked posts are analysed.
+    yearly : bool or tuple(start_year, end_year) , default False
+        if bool, determines if the amount of likes should be analysed per year or globally.
+        if tuple, tuple of the first and last year of the range to analyse.
+    fixed_top : bool
+        Used when yearly is not False.
+        Determines if the top liked friends/pages should be stay fixed for all years or
+        only be calculated for each year individually.
+    show : bool, default to False
+        Show the generated plot.
+
+
+    Notes
+    -----
+    When plotting yearly data, top cannot be False.
+
+    """
     likes_path = os.path.join(data_path, "likes_and_reactions")
     csv_path = os.path.join(likes_path, "posts_and_comments.csv")
     df = pd.read_csv(csv_path)
@@ -15,7 +40,11 @@ def like_statistics(data_path, top=20, yearly=False, fixed_top=False, show=False
     start_year = df['date'].min().year
     index = df.poster.value_counts().head(top).index
     if yearly:
+        if isinstance(yearly, tuple):
+            start_year = yearly[0]
+            end_year = yearly[1]
         rows = end_year - start_year + 1
+
         if top is not None:
             x_length = top * 0.5
             fig, axes = plt.subplots(rows, 1, figsize=(x_length, 6 * rows))
