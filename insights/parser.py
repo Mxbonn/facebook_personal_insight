@@ -5,6 +5,16 @@ import re
 from bs4 import BeautifulSoup
 
 def likes_and_reactions(data_path):
+    """
+    Parse likes_and_reactions/posts_and_comments.html to a csv file that can be used
+    in the processing functions.
+
+    Parameters
+    ----------
+    data_path : str
+        Path to the root directory of your personal facebook data.
+
+    """
     path = os.path.join(data_path, "likes_and_reactions/")
     html_path = os.path.join(path, "posts_and_comments.html")
     soup = BeautifulSoup(open(html_path), "html.parser")
@@ -26,6 +36,18 @@ def likes_and_reactions(data_path):
             writer.writerow([time, reaction, liker, poster])
 
 def messages(data_path, conversation):
+    """
+    Parse message from conversation to a csv file that can be used
+    in the processing functions.
+
+    Parameters
+    ----------
+    data_path : str
+        Path to the root directory of your personal facebook data.
+    conversation : str
+        Name of the directory that contains the message.csv with all data.
+
+    """
     path = os.path.join(data_path, "messages")
     path = os.path.join(path, conversation)
     messages_html_path = os.path.join(path, "message.html")
