@@ -35,3 +35,7 @@ The resulting folder structure looks like this:
 
 This project contains tools to gather analysis from your **messages** and **likes and reactions**.
 Use `parser.py` to create csv files that need to be present for the analysis functions to work.
+
+-----
+Blog post with more information:
+https://medium.com/@mxbonn/i-analysed-my-own-facebook-data-b6b74958e1c0
