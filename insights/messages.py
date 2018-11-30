@@ -32,7 +32,7 @@ def plot_messages(data_path, conversation, end_date=None, start_date=30, tick_wi
     show : bool, default to False
         Show the generated plot.
     """
-    messages_path = os.path.join(data_path, "messages")
+    messages_path = os.path.join(data_path, "messages/inbox")
     path = os.path.join(messages_path, conversation)
     csv_path = os.path.join(path, "message.csv")
 
@@ -99,7 +99,7 @@ def plot_messages(data_path, conversation, end_date=None, start_date=30, tick_wi
     ax.set_xlabel("Date")
     ax.set_ylabel("Time")
 
-    output_path = os.path.join(messages_path, "insights")
+    output_path = os.path.join(data_path, "output")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -133,7 +133,7 @@ def plot_amount_messages(data_path, conversation, end_date=None, start_date=30, 
         Show the generated plot.
 
     """
-    messages_path = os.path.join(data_path, "messages")
+    messages_path = os.path.join(data_path, "messages/inbox")
     path = os.path.join(messages_path, conversation)
     csv_path = os.path.join(path, "message.csv")
 
@@ -219,7 +219,7 @@ def plot_amount_messages(data_path, conversation, end_date=None, start_date=30, 
 
     ax.legend()
 
-    output_path = os.path.join(messages_path, "insights")
+    output_path = os.path.join(data_path, "output")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -245,7 +245,7 @@ def message_activity_hourly(data_path, sender, show=False):
         Show the generated plot.
 
     """
-    path = os.path.join(data_path, "messages")
+    path = os.path.join(data_path, "messages/inbox")
     directories = os.listdir(path)
     df = None
     for directory in directories:
@@ -270,7 +270,7 @@ def message_activity_hourly(data_path, sender, show=False):
     ax.get_xaxis().set_visible(False)
     ax.set_title('Message activity per hour.')
 
-    output_path = os.path.join(path, "insights")
+    output_path = os.path.join(data_path, "output")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -323,7 +323,7 @@ def message_activity_weekly(data_path, sender, show=False):
     days = ['invisible tick', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     ax.set_xticklabels(days)
 
-    output_path = os.path.join(path, "insights")
+    output_path = os.path.join(data_path, "output")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -358,7 +358,7 @@ def most_active_chat(data_path, tick_width=1, end_date=None, start_date=30, lege
         Show the generated plot.
 
     """
-    path = os.path.join(data_path, "messages")
+    path = os.path.join(data_path, "messages/inbox")
     directories = os.listdir(path)
     df = None
     for directory in directories:
@@ -434,7 +434,7 @@ def most_active_chat(data_path, tick_width=1, end_date=None, start_date=30, lege
     ax.set_xlabel("Date")
     ax.set_ylabel("Messages")
 
-    output_path = os.path.join(path, "insights")
+    output_path = os.path.join(data_path, "output")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
